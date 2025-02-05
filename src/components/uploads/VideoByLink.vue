@@ -35,7 +35,6 @@
 import { ref } from "vue";
 import { useToast } from "vue-toast-notification";
 import axios from "axios";
-import FileInput from "../ui/FileInput.vue";
 import Input from "../ui/Input.vue";
 import Button from "../ui/Button.vue";
 
