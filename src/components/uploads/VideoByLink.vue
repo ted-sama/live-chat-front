@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-2xl">Envoyer une vidéo par lien YouTube</h1>
+    <h1 class="text-2xl">Envoyer une vidéo par fichier</h1>
     <div class="flex flex-col gap-y-4 mt-6">
       <Input
         v-model="link"
@@ -10,23 +10,23 @@
       />
       <Input v-model="caption" placeholder="Légende" class="w-full" />
       <div class="space-x-4">
-        <input v-model="duration" placeholder="Durée" class="input w-32" type="number" />
+        <input
+          v-model="duration"
+          placeholder="Durée"
+          class="input w-32"
+          type="number"
+        />
         <span>secondes (0 correspond à la durée initiale de la vidéo)</span>
       </div>
       <Button :disabled="!link" @click="upload">Envoyer</Button>
     </div>
     <div class="flex flex-col mt-8 justify-center items-center">
       <h2 class="text-xl">Aperçu de la vidéo</h2>
-      <span>Si l'aperçu ne charge pas correctement, la vidéo ne s'affichera sûrement pas sur les clients (sauf .mov)</span>
-      <iframe
-        id="ytplayer"
-        src=""
-        class="mt-4"
-        width="640"
-        height="360"
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
+      <span
+        >Si l'aperçu ne charge pas correctement, la vidéo ne s'affichera
+        sûrement pas sur les clients (sauf .mov)</span
+      >
+      <video src="" class="mt-4 h-96" controls></video>
     </div>
   </div>
 </template>
@@ -35,6 +35,7 @@
 import { ref } from "vue";
 import { useToast } from "vue-toast-notification";
 import axios from "axios";
+import FileInput from "../ui/FileInput.vue";
 import Input from "../ui/Input.vue";
 import Button from "../ui/Button.vue";
 
@@ -44,22 +45,21 @@ const toast = useToast();
 
 const link = ref<string>("");
 const caption = ref<string>("");
-const duration = ref<number>(5);
+const duration = ref<number>(0);
 
-// preview the video on the page with youtube embed
+// preview the video on the page
 const preview = () => {
   if (!link.value) return;
 
   setTimeout(() => {
-    const videoId =
-      link.value.split("v=")[1] || link.value.split("youtu.be/")[1];
-    const embedLink: string = `https://www.youtube.com/embed/${videoId}`;
-    const player = document.getElementById("ytplayer") as HTMLIFrameElement;
-    player.src = embedLink;
+    const video = document.querySelector("video");
+    if (video) {
+      video.setAttribute("src", link.value);
+    }
   }, 1000);
 };
 
-// upload the video to the server
+// upload the image to the server
 const upload = async () => {
   // json form
   const data = {
@@ -70,13 +70,13 @@ const upload = async () => {
   };
 
   try {
-    await axios.post(`${server}/api/upload/video-by-link/youtube`, data);
-    toast.success("Image envoyée avec succès !", {
+    await axios.post(`${server}/api/upload/video-by-link`, data);
+    toast.success("Vidéo envoyée avec succès !", {
       position: "top",
       duration: 3000,
     });
   } catch (err) {
-    toast.error("Erreur lors de l'envoi de l'image", {
+    toast.error("Erreur lors de l'envoi de la vidéo", {
       position: "top",
       duration: 3000,
     });

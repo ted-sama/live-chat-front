@@ -5,7 +5,8 @@
       <ImageByFile v-if="activeTab === 0" />
       <ImageByLink v-if="activeTab === 1" />
       <VideoByFile v-if="activeTab === 2" />
-      <VideoByYoutubeLink v-if="activeTab === 3" />
+      <VideoByLink v-if="activeTab === 3" />
+      <!-- <VideoByYoutubeLink v-if="activeTab === 4" /> -->
     </div>
   </div>
 </template>
@@ -16,9 +17,10 @@ import Tabs from './components/ui/Tabs.vue';
 import ImageByFile from './components/uploads/ImageByFile.vue';
 import ImageByLink from './components/uploads/ImageByLink.vue';
 import VideoByFile from './components/uploads/VideoByFile.vue';
+import VideoByLink from './components/uploads/VideoByLink.vue';
 import VideoByYoutubeLink from './components/uploads/VideoByYoutubeLink.vue';
 
-const tabs: string[] = ['Image par fichier', 'Image par lien', 'Vidéo par fichier', 'Vidéo par lien YouTube'];
+const tabs: string[] = ['Image par fichier', 'Image par lien', 'Vidéo par fichier', 'Vidéo par lien']; //, 'Vidéo par lien YouTube' desactivé pour le moment
 const activeTab = ref(0);
 
 const changeTab = (index: number) => {
