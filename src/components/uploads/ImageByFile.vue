@@ -61,7 +61,7 @@ const upload = async () => {
   formData.append("src", file.value as Blob);
   formData.append("caption", caption.value);
   // send duration in milliseconds
-  formData.append("duration", duration.value * 1000);
+  formData.append("duration", (duration.value * 1000).toString());
 
   try {
     await axios.post(`${server}/api/upload/image-by-file`, formData, {
