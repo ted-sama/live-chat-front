@@ -61,6 +61,8 @@ const preview = () => {
 
 // upload the video to the server
 const upload = async () => {
+  if (!link.value) return;
+
   // json form
   const data = {
     src: link.value,

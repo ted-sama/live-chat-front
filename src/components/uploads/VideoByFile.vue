@@ -57,6 +57,8 @@ const preview = (e: any) => {
 
 // upload the image to the server
 const upload = async () => {
+  if (!file.value) return;
+
   const formData = new FormData();
   formData.append("src", file.value as Blob);
   formData.append("caption", caption.value);
