@@ -3,9 +3,9 @@
     <div
       v-for="(tab, index) in tabs"
       :key="index"
-      :class="{ 'tab tab-active': isActive(index), tab: !isActive(index) }"
+      :class="{ 'tab tab-active': isActive(tab), tab: !isActive(tab) }"
       role="tab"
-      @click="changeTab(index)"
+      @click="changeTab(tab)"
     >
       {{ tab }}
     </div>
@@ -13,27 +13,31 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 
-defineProps({
+const props = defineProps({
   tabs: {
-    type: Array,
+    type: Array as () => string[],
     required: true,
   },
 });
 
 const emit = defineEmits(["currentTab"]);
 
-const activeTab = ref(0);
+const activeTab = ref<string>('');
 
-const changeTab = (index: number) => {
-  activeTab.value = index;
+const changeTab = (tab: string) => {
+  activeTab.value = tab;
   emit("currentTab", activeTab.value);
 };
 
-const isActive = (index: number) => {
-  return activeTab.value === index;
+const isActive = (tab: string) => {
+  return activeTab.value === tab;
 };
+
+onMounted(() => {
+  changeTab(props.tabs[0]);
+});
 </script>
 
 <style></style>
