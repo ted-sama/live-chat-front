@@ -111,7 +111,7 @@ const fileUrl = ref<string | null>(null);
 const isDragging = ref<boolean>(false);
 
 const caption = ref<string>("");
-const duration = ref<number>(5);
+const duration = ref<number>(0);
 
 const handlePaste = async (event: ClipboardEvent) => {
   const clipboardItems = event.clipboardData?.items || [];
