@@ -4,23 +4,56 @@
     <div class="flex flex-col gap-y-4 mt-6">
       <Input
         v-model="link"
-        placeholder="Lien"
+        placeholder="Lien YouTube"
         class="w-full"
-        @input="preview"
+        @input="updatePreview"
       />
       <Input v-model="caption" placeholder="Légende" class="w-full" />
-      <div class="space-x-4">
-        <input v-model="duration" placeholder="Durée" class="input w-32" type="number" />
-        <span>secondes (0 correspond à la durée initiale de la vidéo)</span>
+
+      <!-- Trim controls -->
+      <div class="bg-gray-100 p-4 rounded-lg">
+        <h3 class="font-semibold mb-2">Rogner la vidéo</h3>
+        <div class="flex gap-4 items-center flex-wrap">
+          <div>
+            <label class="text-sm text-gray-600">Début (sec)</label>
+            <input
+              v-model.number="trimStart"
+              type="number"
+              min="0"
+              class="input w-24"
+              @input="updatePreview"
+            />
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">Fin (sec)</label>
+            <input
+              v-model.number="trimEnd"
+              type="number"
+              min="0"
+              class="input w-24"
+              @input="updatePreview"
+            />
+          </div>
+          <div class="text-sm text-gray-600">
+            Durée selectionnée: {{ trimDuration }}s
+          </div>
+        </div>
       </div>
-      <Button :disabled="!link" @click="upload">Envoyer</Button>
+
+      <Button :disabled="!link || isUploading" @click="upload">
+        {{ isUploading ? "Upload..." : "Envoyer" }}
+      </Button>
     </div>
+
+    <!-- Preview with trim markers -->
     <div class="flex flex-col mt-8 justify-center items-center">
-      <h2 class="text-xl">Aperçu de la vidéo</h2>
-      <span>Si l'aperçu ne charge pas correctement, la vidéo ne s'affichera sûrement pas sur les clients (sauf .mov)</span>
+      <h2 class="text-xl">Aperçu</h2>
+      <p class="text-sm text-gray-600 mb-2">
+        L'aperçu montre la zone qui sera rognée
+      </p>
       <iframe
         id="ytplayer"
-        src=""
+        :src="previewUrl"
         class="mt-4"
         width="640"
         height="360"
@@ -32,7 +65,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useToast } from "vue-toast-notification";
 import axios from "axios";
 import Input from "../ui/Input.vue";
@@ -44,47 +77,76 @@ const toast = useToast();
 
 const link = ref<string>("");
 const caption = ref<string>("");
-const duration = ref<number>(5);
+const trimStart = ref<number>(0);
+const trimEnd = ref<number>(0);
+const isUploading = ref(false);
 
-// preview the video on the page with youtube embed
-const preview = () => {
-  if (!link.value) return;
+const videoId = computed(() => {
+  if (!link.value) return "";
+  const match = link.value.match(/(?:v=|youtu\.be\/)([^&]+)/);
+  return match ? match[1] : "";
+});
 
-  setTimeout(() => {
-    const videoId =
-      link.value.split("v=")[1] || link.value.split("youtu.be/")[1];
-    const embedLink: string = `https://www.youtube.com/embed/${videoId}`;
-    const player = document.getElementById("ytplayer") as HTMLIFrameElement;
-    player.src = embedLink;
-  }, 1000);
+const previewUrl = computed(() => {
+  if (!videoId.value) return "";
+  let url = `https://www.youtube.com/embed/${videoId.value}`;
+  const params = new URLSearchParams();
+  if (trimStart.value > 0) params.set("start", trimStart.value.toString());
+  if (trimEnd.value > 0) params.set("end", trimEnd.value.toString());
+  const query = params.toString();
+  if (query) url += `?${query}`;
+  return url;
+});
+
+const trimDuration = computed(() => {
+  if (trimEnd.value > 0 && trimEnd.value > trimStart.value) {
+    return trimEnd.value - trimStart.value;
+  }
+  return 0;
+});
+
+const updatePreview = () => {
+  // Force iframe refresh
+  const player = document.getElementById("ytplayer") as HTMLIFrameElement;
+  if (player) {
+    player.src = previewUrl.value;
+  }
 };
 
-// upload the video to the server
 const upload = async () => {
-  if (!link.value) return;
+  if (!link.value || !videoId.value) return;
 
-  // json form
-  const data = {
+  isUploading.value = true;
+  const data: any = {
     src: link.value,
     caption: caption.value,
-    // send duration in milliseconds
-    duration: duration.value * 1000,
+    trimStart: trimStart.value,
   };
+
+  if (trimEnd.value > 0) {
+    data.trimEnd = trimEnd.value;
+  }
 
   try {
     await axios.post(`${server}/api/upload/video-by-link/youtube`, data);
-    toast.success("Image envoyée avec succès !", {
+    toast.success("Vidéo YouTube envoyée avec succès !", {
       position: "top",
       duration: 3000,
     });
+    // Reset form
+    link.value = "";
+    caption.value = "";
+    trimStart.value = 0;
+    trimEnd.value = 0;
+    updatePreview();
   } catch (err) {
-    toast.error("Erreur lors de l'envoi de l'image", {
+    toast.error("Erreur lors de l'envoi de la vidéo", {
       position: "top",
       duration: 3000,
     });
     console.error(err);
+  } finally {
+    isUploading.value = false;
   }
 };
 </script>
-
-<style></style>
